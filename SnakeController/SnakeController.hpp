@@ -7,6 +7,7 @@
 #include "IEventHandler.hpp"
 #include "SnakeInterface.hpp"
 
+
 class Event;
 class IPort;
 
@@ -49,6 +50,9 @@ private:
 
     Direction m_currentDirection;
     std::list<Segment> m_segments;
+
+    bool checkLost(Segment& newHead);
+
 };
 
 } // namespace Snake
