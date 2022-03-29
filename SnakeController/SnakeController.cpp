@@ -63,21 +63,20 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
     }
 }
 
-bool Controller::checkLost(Segment& newHead)
+bool Controller::checkLost(int x, int y)
 {
     for (auto segment : m_segments) {
-        if (segment.x == newHead.x and segment.y == newHead.y) {
-            m_scorePort.send(std::make_unique<EventT<LooseInd>>());
+        if (segment.x == x and segment.y == y) {
             return true;
         }
     }
     return false;
 }
 
-void Controller::receive(std::unique_ptr<Event> e)
+void Controller::receive(std::unique_ptr<Event> event)
 {
     try {
-        auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*e);
+        auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*event);
 
         Segment const& currentHead = m_segments.front();
 
@@ -86,7 +85,10 @@ void Controller::receive(std::unique_ptr<Event> e)
         newHead.y = currentHead.y + (not (m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
         newHead.ttl = currentHead.ttl;
 
-        bool lost = checkLost(newHead);
+        bool lost = checkLost(newHead.x,newHead.y);
+
+        if(lost)
+            m_scorePort.send(std::make_unique<EventT<LooseInd>>());
 
         if (not lost) {
             if (std::make_pair(newHead.x, newHead.y) == m_foodPosition) {
@@ -129,14 +131,14 @@ void Controller::receive(std::unique_ptr<Event> e)
         }
     } catch (std::bad_cast&) {
         try {
-            auto direction = dynamic_cast<EventT<DirectionInd> const&>(*e)->direction;
+            auto direction = dynamic_cast<EventT<DirectionInd> const&>(*event)->direction;
 
             if ((m_currentDirection & 0b01) != (direction & 0b01)) {
                 m_currentDirection = direction;
             }
         } catch (std::bad_cast&) {
             try {
-                auto receivedFood = *dynamic_cast<EventT<FoodInd> const&>(*e);
+                auto receivedFood = *dynamic_cast<EventT<FoodInd> const&>(*event);
 
                 bool requestedFoodCollidedWithSnake = false;
                 for (auto const& segment : m_segments) {
@@ -166,7 +168,7 @@ void Controller::receive(std::unique_ptr<Event> e)
 
             } catch (std::bad_cast&) {
                 try {
-                    auto requestedFood = *dynamic_cast<EventT<FoodResp> const&>(*e);
+                    auto requestedFood = *dynamic_cast<EventT<FoodResp> const&>(*event);
 
                     bool requestedFoodCollidedWithSnake = false;
                     for (auto const& segment : m_segments) {

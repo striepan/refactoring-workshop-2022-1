@@ -51,7 +51,7 @@ private:
     Direction m_currentDirection;
     std::list<Segment> m_segments;
 
-    bool checkLost(Segment& newHead);
+    bool checkLost(int x, int y);
 
 };
 
