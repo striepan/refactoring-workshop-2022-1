@@ -140,13 +140,7 @@ void Controller::receive(std::unique_ptr<Event> event)
             try {
                 auto receivedFood = *dynamic_cast<EventT<FoodInd> const&>(*event);
 
-                bool requestedFoodCollidedWithSnake = false;
-                for (auto const& segment : m_segments) {
-                    if (segment.x == receivedFood.x and segment.y == receivedFood.y) {
-                        requestedFoodCollidedWithSnake = true;
-                        break;
-                    }
-                }
+                bool requestedFoodCollidedWithSnake = checkLost(receivedFood.x,receivedFood.y);
 
                 if (requestedFoodCollidedWithSnake) {
                     m_foodPort.send(std::make_unique<EventT<FoodReq>>());
@@ -170,13 +164,7 @@ void Controller::receive(std::unique_ptr<Event> event)
                 try {
                     auto requestedFood = *dynamic_cast<EventT<FoodResp> const&>(*event);
 
-                    bool requestedFoodCollidedWithSnake = false;
-                    for (auto const& segment : m_segments) {
-                        if (segment.x == requestedFood.x and segment.y == requestedFood.y) {
-                            requestedFoodCollidedWithSnake = true;
-                            break;
-                        }
-                    }
+                    bool requestedFoodCollidedWithSnake = checkLost(requestedFood.x,requestedFood.y);
 
                     if (requestedFoodCollidedWithSnake) {
                         m_foodPort.send(std::make_unique<EventT<FoodReq>>());
